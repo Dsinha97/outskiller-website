@@ -293,6 +293,30 @@ const TALK_NOTES: Record<string, string> = {
 - Perfectly secure steganography is invisible in the channel, so watch actions, tool use and chain of thought.
 
 **Weekend ideas he suggested.** Show that paraphrasing works as a defense (he is not optimistic); RL-train colluding agents and test monitors or probes against them; Schelling-point coordination across model versions; a monitor for encoded chain of thought and hidden Unicode; an agent colluding with a future copy of itself. These feed our Angles E, F and G.`,
+  kemeklis: `**The argument.** Treat frontier AIs as untrusted insiders. The hard part is that they are numerous, conspiring, and often copies of one another. The talk focuses on the few-blatant-actions end (weight exfiltration, rogue internal deployment), not subtle research sabotage.
+
+**AI control in one picture.** U is the smart, possibly scheming model; T is a weaker model trusted because it is too weak to scheme; H is humans, who can audit only about 2% of actions. T scores each action: low runs, suspicious is rewritten by T, the most suspicious goes to a human. Red team plays U, blue team builds the protocol. Trusted editing reached about 92% safe and 94% useful in the original APPS setup.
+
+**Six defenses, and how each breaks**
+- Treat AIs like insiders → the insiders are copies that collude.
+- A trusted model checks every action → it is weaker, so attacks slip past.
+- A copy of the strong model watches → copies collude without talking.
+- Read their reasoning → they can think without writing it down.
+- Control everything they see → they know when they are tested.
+- Labs already monitor agents → incidents keep happening.
+
+**Collusion without messages.** Copies can pick the same obvious cue (a Schelling point) or recognise their own output ("could I have written this?"). Paraphrasing cannot stop that. Counters he lists: paraphrasing, diverse models, trusted models, honeypots.
+
+**Why it matters to us.** Same idea as the steganography talks from the control side: any monitor that is a copy of the agent may collude with it. Fits the Detection and Audit track. Candidate test: same-model monitor vs different-model monitor, with a same-model no-communication control.
+
+Slides only; figures are his citations of other work (e.g. monitor catches 94.9% of first-try attacks at 1% false positives) and are not checked.`,
+  logistics: `**Goal.** Build the experiment that catches agents colluding. One of three tracks (Markets and Collusion; Detection and Audit, which also holds the Red-teaming challenge on Poseidon's Dolos-1.5B; Collusion Carriers and Countermeasures). A project can span tracks.
+
+**Rules that can disqualify.** Only the weekend's work is judged; mark pre-sprint code as preexisting in the README and the report. AI tools are fine, but made-up results or references can disqualify. At most two projects per person. One rubric: Impact Potential and Innovation, Execution Quality, Presentation and Clarity. Limitations and Dual-Use / Ethical appendix is required.
+
+**Submitting.** Three steps from the button on the sprint page: project details plus PDF (up to 25 MB), optional material, team details (including Discord username and Google Scholar profile). Deadline Sun Oct 25 11:59 PM AoE = Mon Oct 26 11:59 AM UTC. 4 to 8 pages, 8 a hard cap before references and appendices.
+
+**Watch out.** The slide says resubmitting does not replace the PDF, but Kamil said that was a mistake: follow the Guidelines (resubmit with the exact same title and details and the new files replace the old). A judge can decline to score a report that is hard to follow. Results can take up to a month (74 judges, per our note-taker). Questions: Discord help-desk, tag @Support, or the sprints email.`,
 };
 
 // Talks and sessions, from wiki/sprint/schedule.md (times there are given in ET and UTC);
@@ -300,8 +324,8 @@ const TALK_NOTES: Record<string, string> = {
 const talks: { slug: string; luma: string; speaker: string; aff: string; title: string; at: string; mins?: number; wiki?: string; people?: string[]; papers?: string[]; note?: string; event?: boolean }[] = [
   { slug: "talk-1", luma: "https://luma.com/ai-collusion-research-sprint-joan-velja", speaker: "Joan Velja", aff: "Oxford", title: "How concerned should we be by steganography?", at: "2026-10-22T14:15:00Z", mins: 54, wiki: "sprint/talk-1-steganographic-collusion", people: ["people/joan-velja"], papers: ["papers/hidden-in-plain-text"] },
   { slug: "talk-2", luma: "https://luma.com/ai-collusion-research-sprint-sumeet-motwani", speaker: "Sumeet Motwani", aff: "Oxford", title: "We're Not Prepared for Steganographic Collusion", at: "2026-10-22T17:15:00Z", mins: 41, wiki: "sprint/talk-2-not-prepared-for-steganographic-collusion", people: ["people/sumeet-motwani"], papers: ["papers/secret-collusion-ai-agents"] },
-  { slug: "kemeklis", luma: "https://luma.com/ai-collusion-research-sprint-jurgis-kemeklis", speaker: "Jurgis Kemeklis", aff: "MIT AI Alignment, Redwood", title: "Mitigating Insider threats from AIs with AI control", at: "2026-10-23T15:15:00Z", people: ["people/jurgis-kemeklis"] },
-  { slug: "logistics", luma: "https://luma.com/ai-collusion-research-sprint-logistics", speaker: "Kamil Alaa", aff: "Apart Research", title: "Sprint Logistics: how the weekend works", at: "2026-10-23T16:15:00Z", mins: 30, event: true, note: "Tracks and the Red-teaming challenge, rules, how to submit and the deadline, talks still to come, Modal credits, finding a team on Discord. Recorded." },
+  { slug: "kemeklis", luma: "https://luma.com/ai-collusion-research-sprint-jurgis-kemeklis", speaker: "Jurgis Kemeklis", aff: "MIT AI Alignment, Redwood", title: "Mitigating Insider threats from AIs with AI control", at: "2026-10-23T15:15:00Z", wiki: "sprint/talk-3-mitigating-insider-threats-ai-control", people: ["people/jurgis-kemeklis"], papers: ["papers/sleight-bench"] },
+  { slug: "logistics", luma: "https://luma.com/ai-collusion-research-sprint-logistics", speaker: "Kamil Alaa", aff: "Apart Research", title: "Sprint Logistics: how the weekend works", at: "2026-10-23T16:15:00Z", mins: 30, event: true, wiki: "sprint/talk-4-sprint-logistics", people: ["people/kamil-alaa"], note: "Tracks and the Red-teaming challenge, rules, how to submit and the deadline, talks still to come, Modal credits, finding a team on Discord. Recorded." },
   { slug: "anwar", luma: "https://luma.com/ai-collusion-research-sprint-usman-anwar", speaker: "Usman Anwar", aff: "Cambridge", title: "Challenges in Detecting Steganography in LLM Transcripts", at: "2026-10-23T17:15:00Z", people: ["people/usman-anwar"] },
   { slug: "bagdasarian-nakamura", luma: "https://luma.com/ai-collusion-sprint-bagdasarian-nakamura", speaker: "Eugene Bagdasarian and Mason Nakamura", aff: "UMass Amherst", title: "Colosseum authors (title not announced)", at: "2026-10-23T18:15:00Z", people: ["people/eugene-bagdasarian", "people/mason-nakamura"], papers: ["papers/colosseum-auditing-collusion"] },
   { slug: "shi", luma: "https://luma.com/ai-collusion-research-sprint-jerick-shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "When Agents Lie author (title not announced)", at: "2026-10-24T00:15:00Z", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
@@ -315,7 +339,7 @@ talks.forEach((t, i) => {
     slug: t.slug,
     title: `${t.speaker}: ${t.title}`,
     body: TALK_NOTES[t.slug] ?? "",
-    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-23T00:00:00Z"), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
+    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-23T17:00:00Z"), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
     origin: "brief",
     sort: i,
   });
