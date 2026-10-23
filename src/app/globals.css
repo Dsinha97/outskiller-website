@@ -635,6 +635,10 @@ p {
   font-size: 13px;
 }
 dialog.sheet {
+  /* The global reset zeroes margins, which pins a modal dialog to the top-left. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
   width: min(640px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
   border: 1px solid var(--line);
@@ -834,4 +838,15 @@ dialog.sheet::backdrop {
 }
 .band .muted {
   color: var(--band-fg2);
+}
+
+/* Track filter: hide cards outside the chosen track without re-rendering the page. */
+.track-grid[data-track="1"] > [data-tracks]:not([data-tracks~="1"]),
+.track-grid[data-track="2"] > [data-tracks]:not([data-tracks~="2"]),
+.track-grid[data-track="3"] > [data-tracks]:not([data-tracks~="3"]) {
+  display: none;
+}
+/* The plan poll sits on the page theme; an accent rule marks it as the live decision. */
+.card.poll {
+  border-top: 3px solid var(--accent);
 }

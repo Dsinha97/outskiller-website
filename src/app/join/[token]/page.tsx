@@ -24,7 +24,7 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
       lede={
         usable
           ? `You've been invited to the Outskiller sprint workspace. This link works until ${fmt(invite.expiresAt, "UTC", { weekday: "short", month: "short", day: "numeric" })}.`
-          : "This invite link has expired or been used up. Ask Deepayan or Liezl for a new one."
+          : "This invite link has expired or been used up. Ask an admin for a new one."
       }
     >
       {usable ? <JoinForm token={token} /> : null}

@@ -57,7 +57,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
     <>
       <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: 14 }}>
         <div style={{ flex: "1 1 380px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <span className="eyebrow">Admin · Deepayan and Liezl</span>
+          <span className="eyebrow">Admin</span>
           <h1 className="display h1">Approvals</h1>
           <p className="sub">Suggestions wait here until an admin approves them. Every approval becomes a new version, and the item&apos;s history keeps the old one.</p>
         </div>

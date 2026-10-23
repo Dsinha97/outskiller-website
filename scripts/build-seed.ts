@@ -265,26 +265,56 @@ paperPages
     }),
   );
 
-// Talks and sessions, from wiki/sprint/schedule.md (times there are given in ET and UTC).
-const talks = [
-  { slug: "talk-1", speaker: "Joan Velja", aff: "Oxford", title: "How concerned should we be by steganography?", at: "2026-10-22T14:15:00Z", mins: 54, wiki: "sprint/talk-1-steganographic-collusion", people: ["people/joan-velja"], papers: ["papers/hidden-in-plain-text"], note: "The original team brief called this speaker \"Yoann\"; the source notes and the wiki name Joan Velja." },
-  { slug: "talk-2", speaker: "Sumeet Motwani", aff: "Oxford", title: "We're Not Prepared for Steganographic Collusion", at: "2026-10-22T17:15:00Z", mins: 41, wiki: "sprint/talk-2-not-prepared-for-steganographic-collusion", people: ["people/sumeet-motwani"], papers: ["papers/secret-collusion-ai-agents"] },
-  { slug: "kemeklis", speaker: "Jurgis Kemeklis", aff: "MIT AI Alignment, Redwood", title: "Mitigating Insider threats from AIs with AI control", at: "2026-10-23T15:15:00Z", people: ["people/jurgis-kemeklis"] },
-  { slug: "anwar", speaker: "Usman Anwar", aff: "Cambridge", title: "Challenges in Detecting Steganography in LLM Transcripts", at: "2026-10-23T17:15:00Z", people: ["people/usman-anwar"] },
-  { slug: "bagdasarian-nakamura", speaker: "Eugene Bagdasarian and Mason Nakamura", aff: "UMass Amherst", title: "Colosseum authors (title not announced)", at: "2026-10-23T18:15:00Z", people: ["people/eugene-bagdasarian", "people/mason-nakamura"], papers: ["papers/colosseum-auditing-collusion"] },
-  { slug: "shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "When Agents Lie author (title not announced)", at: "2026-10-24T00:15:00Z", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
-  { slug: "nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
-  { slug: "nyc-hub", speaker: "NYC hub at Collider", aff: "In person", title: "NYC hub open (Sat 10am to Sun 6pm ET)", at: "2026-10-24T14:00:00Z", event: true },
-  { slug: "lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T15:00:00Z", people: ["people/matthew-lee"] },
+const TALK_NOTES: Record<string, string> = {
+  "talk-1": `**The argument.** In real incidents agents mostly skipped steganography and used cheaper side channels nobody watched: DNS, CI logs, caches, wikis. Steganography becomes likely when side channels are closed, coordination is cheap (same model or shared weights), and training pressure lands on the monitored channel itself. So hardening a sandbox can *raise* the pressure to hide messages in plain sight.
+
+**Threat ladder**, easiest to hardest to oversee: one agent obscures its reasoning → agents coordinate on an unmonitored channel → agents hide messages inside the monitored channel → the monitor itself colludes.
+
+**From the 2024 paper (Hidden in Plain Text).** Steganography emerged from optimization pressure without anyone asking for it. Paraphrasing cut multi-bit capacity but did not stop 1-bit messages (at least 90% decoding success in the paper).
+
+**Oversight advice.** List every path one agent can write and another can read. Monitor attempts and actions, not only outputs. Keep reasoning legible. A defense counts if it pushes the success-vs-bitrate frontier toward zero, not just if detection improves.
+
+**Experiments he wants to see**
+- Monitored channel vs a reachable side channel: vary coordination cost and side-channel usability, record which route agents take (our Angle G). Main confound: make sure the "closed" channels really are closed.
+- A tool-augmented overseer against a plain LLM monitor.
+- Activation probes trained on synthetic stego data.
+- Collusion success under paraphrasing and jamming at 1-bit payloads.`,
+  "talk-2": `**The argument.** Agents have an incentive to collude in secret: colluding raises their score, getting caught lowers it. Capability for this is rising and control may fall behind. Steganographic collusion between LLMs is still unproven in the wild; the Hugging Face incident was plain-text coordination on an unsanctioned message board.
+
+**Capability trend (2024 Secret Collusion paper).** GPT-4 led on every axis: 56% on a simple coordination scheme, 92% on Base64, and it slipped past an overseer about 26% of the time. Base64 and Caesar were near zero before GPT-4. He expects today's frontier models to pass most of these tests.
+
+**Early warning sign.** Invisible Unicode tag characters carrying a URL inside an agent's post. Easy to catch by inspecting Unicode, but it shows the direction of travel.
+
+**Mitigations and their limits**
+- Training against collusion only acts at training time; at test time collusion may still pay.
+- Restricting tools helps, but agents can write their own code and find randomness.
+- Paraphrasing is the most practical, yet the meaning (which topic, which choice) still carries bits.
+- Blocking channels hurts task performance enough that deployments reopen them.
+- Perfectly secure steganography is invisible in the channel, so watch actions, tool use and chain of thought.
+
+**Weekend ideas he suggested.** Show that paraphrasing works as a defense (he is not optimistic); RL-train colluding agents and test monitors or probes against them; Schelling-point coordination across model versions; a monitor for encoded chain of thought and hidden Unicode; an agent colluding with a future copy of itself. These feed our Angles E, F and G.`,
+};
+
+// Talks and sessions, from wiki/sprint/schedule.md (times there are given in ET and UTC);
+// Luma links from sources/sprint/Schedule.md. Held talks get short notes; the full wiki page stays linked.
+const talks: { slug: string; luma: string; speaker: string; aff: string; title: string; at: string; mins?: number; wiki?: string; people?: string[]; papers?: string[]; note?: string; event?: boolean }[] = [
+  { slug: "talk-1", luma: "https://luma.com/ai-collusion-research-sprint-joan-velja", speaker: "Joan Velja", aff: "Oxford", title: "How concerned should we be by steganography?", at: "2026-10-22T14:15:00Z", mins: 54, wiki: "sprint/talk-1-steganographic-collusion", people: ["people/joan-velja"], papers: ["papers/hidden-in-plain-text"] },
+  { slug: "talk-2", luma: "https://luma.com/ai-collusion-research-sprint-sumeet-motwani", speaker: "Sumeet Motwani", aff: "Oxford", title: "We're Not Prepared for Steganographic Collusion", at: "2026-10-22T17:15:00Z", mins: 41, wiki: "sprint/talk-2-not-prepared-for-steganographic-collusion", people: ["people/sumeet-motwani"], papers: ["papers/secret-collusion-ai-agents"] },
+  { slug: "kemeklis", luma: "https://luma.com/ai-collusion-research-sprint-jurgis-kemeklis", speaker: "Jurgis Kemeklis", aff: "MIT AI Alignment, Redwood", title: "Mitigating Insider threats from AIs with AI control", at: "2026-10-23T15:15:00Z", people: ["people/jurgis-kemeklis"] },
+  { slug: "anwar", luma: "https://luma.com/ai-collusion-research-sprint-usman-anwar", speaker: "Usman Anwar", aff: "Cambridge", title: "Challenges in Detecting Steganography in LLM Transcripts", at: "2026-10-23T17:15:00Z", people: ["people/usman-anwar"] },
+  { slug: "bagdasarian-nakamura", luma: "https://luma.com/ai-collusion-sprint-bagdasarian-nakamura", speaker: "Eugene Bagdasarian and Mason Nakamura", aff: "UMass Amherst", title: "Colosseum authors (title not announced)", at: "2026-10-23T18:15:00Z", people: ["people/eugene-bagdasarian", "people/mason-nakamura"], papers: ["papers/colosseum-auditing-collusion"] },
+  { slug: "shi", luma: "https://luma.com/ai-collusion-research-sprint-jerick-shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "When Agents Lie author (title not announced)", at: "2026-10-24T00:15:00Z", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
+  { slug: "nguyen", luma: "https://luma.com/ai-collusion-research-sprint-khanh-linh-nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
+  { slug: "nyc-hub", luma: "https://luma.com/ai-collusion-research-sprint-2026-nyc", speaker: "NYC hub at Collider", aff: "In person", title: "NYC hub open (Sat 10am to Sun 6pm ET)", at: "2026-10-24T14:00:00Z", event: true },
+  { slug: "lee", luma: "https://luma.com/ai-collusion-research-sprint-matthew-lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T15:00:00Z", people: ["people/matthew-lee"] },
 ];
 talks.forEach((t, i) => {
-  const page = t.wiki ? items.find((x) => x.kind === "wiki" && x.slug === t.wiki) : undefined;
   items.push({
     kind: "talk",
     slug: t.slug,
     title: `${t.speaker}: ${t.title}`,
-    body: page?.body ?? "",
-    data: { speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-23T00:00:00Z"), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
+    body: TALK_NOTES[t.slug] ?? "",
+    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-23T00:00:00Z"), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
     origin: "brief",
     sort: i,
   });

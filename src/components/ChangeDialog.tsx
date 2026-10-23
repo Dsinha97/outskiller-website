@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { submitChange, type ActionResult } from "@/app/actions/content";
 
-type Field = "title" | "body" | "url" | "question" | "note-only";
+type Field = "title" | "body" | "url" | "question" | "link" | "recording" | "note-only";
 type Props = {
   label: string;
   heading: string;
@@ -11,7 +11,7 @@ type Props = {
   itemId?: number;
   type?: "edit" | "new" | "flag";
   fields?: Field[];
-  initial?: { title?: string; body?: string; url?: string; question?: string };
+  initial?: { title?: string; body?: string; url?: string; question?: string; link?: string; recording?: string };
   isAdmin?: boolean;
   className?: string;
 };
@@ -59,6 +59,18 @@ export function ChangeDialog({ label, heading, kind, itemId, type = itemId ? "ed
             <label className="field">
               Link
               <input name="data.url" type="url" defaultValue={initial.url} placeholder="https://" />
+            </label>
+          )}
+          {!flag && fields.includes("link") && (
+            <label className="field">
+              Talk page (Luma or Zoom)
+              <input name="data.link" type="url" defaultValue={initial.link} placeholder="https://" />
+            </label>
+          )}
+          {!flag && fields.includes("recording") && (
+            <label className="field">
+              Recording
+              <input name="data.recording" type="url" defaultValue={initial.recording} placeholder="https:// (YouTube, Drive, Zoom…)" />
             </label>
           )}
           {!flag && fields.includes("body") && (

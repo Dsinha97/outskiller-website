@@ -30,7 +30,7 @@ export default async function ProjectPage() {
         <span className="eyebrow">Team Project · selected from the plan poll</span>
         <h1 className="display h1">{poll.winner?.label}</h1>
         <p className="sub">
-          The other angles are in the <Link href="/angles/archive">archive</Link>. Suggest edits on each card; Deepayan or Liezl approves them.
+          The other angles are in the <Link href="/angles/archive">archive</Link>. Suggest edits on each card; they go live after admin approval.
         </p>
       </header>
 

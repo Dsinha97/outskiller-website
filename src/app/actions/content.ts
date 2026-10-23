@@ -22,7 +22,9 @@ function readProposed(form: FormData): Proposed {
   for (const [k, v] of form.entries()) {
     if (k.startsWith("data.") && typeof v === "string") data[k.slice(5)] = v.trim();
   }
-  if (typeof data.url === "string" && data.url && !/^https:\/\//.test(data.url)) throw new Error("Links must start with https://");
+  for (const k of ["url", "link", "recording"]) {
+    if (typeof data[k] === "string" && data[k] && !/^https:\/\//.test(data[k] as string)) throw new Error("Links must start with https://");
+  }
   if (Object.keys(data).length) p.data = data;
   return p;
 }
@@ -88,7 +90,7 @@ export async function submitChange(_: ActionResult, form: FormData): Promise<Act
   }
   await d.insert(suggestions).values({ itemId, kind, type, proposed: p, note, authorId: me.id });
   revalidatePath("/", "layout");
-  return { ok: "Sent for approval. Deepayan or Liezl will review it." };
+  return { ok: "Sent for admin approval." };
 }
 
 export async function approveSuggestion(id: number, form: FormData) {

@@ -48,7 +48,7 @@ export async function joinWithInvite(token: string, _: FormState, form: FormData
     .set({ uses: sql`${invites.uses} + 1` })
     .where(and(eq(invites.tokenHash, hashToken(token)), eq(invites.revoked, false), gt(invites.expiresAt, new Date()), lt(invites.uses, invites.maxUses)))
     .returning();
-  if (!invite) return { error: "This invite link has expired or been used up. Ask Deepayan or Liezl for a new one." };
+  if (!invite) return { error: "This invite link has expired or been used up. Ask an admin for a new one." };
 
   const [existing] = await d.select({ id: users.id }).from(users).where(eq(users.email, email));
   if (existing) {

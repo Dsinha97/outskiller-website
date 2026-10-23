@@ -3,18 +3,12 @@ import { addPollOption, removePollOption, selectPlan, undoPlan } from "@/app/act
 import { ChangeDialog } from "@/components/ChangeDialog";
 import { Markdown } from "@/components/Markdown";
 import { StanceControl } from "@/components/StanceControl";
+import { TrackFilter } from "@/components/TrackFilter";
 import { currentPoll, getItem, listItems, members, stanceTallies } from "@/lib/data";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "Project angles" };
 export const dynamic = "force-dynamic";
-
-const TRACKS = [
-  ["all", "All tracks"],
-  ["1", "1 · Markets"],
-  ["2", "2 · Detection & audit"],
-  ["3", "3 · Carriers & countermeasures"],
-];
 
 export default async function AnglesPage({ searchParams }: { searchParams: Promise<{ track?: string }> }) {
   const me = await requireUser();
@@ -30,7 +24,6 @@ export default async function AnglesPage({ searchParams }: { searchParams: Promi
     members(),
   ]);
   const active = people.filter((p) => !p.disabled).length;
-  const shown = angles.filter((a) => track === "all" || (a.data.tracks as string[]).some((t) => t.startsWith(track)));
   const decided = poll?.poll.status === "decided";
   const maxVotes = Math.max(1, ...(poll?.options ?? []).map((o) => o.tally.first + o.tally.interested));
 
@@ -57,13 +50,13 @@ export default async function AnglesPage({ searchParams }: { searchParams: Promi
       </header>
 
       {poll && (
-        <section className="band" aria-label="Plan poll" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+        <section className="card poll" aria-label="Plan poll" style={{ padding: 20, gap: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span className="eyebrow">Plan poll · {decided ? "decided" : "open"}</span>
               <h2 className="display" style={{ fontSize: 26 }}>{decided ? poll.winner?.label : poll.poll.title}</h2>
             </div>
-            <span style={{ fontSize: 13, color: "var(--band-fg2)" }}>
+            <span className="muted">
               {poll.voters} of {active} voted
             </span>
           </div>
@@ -72,7 +65,7 @@ export default async function AnglesPage({ searchParams }: { searchParams: Promi
               <Link className="btn btn-fill" href="/project">Open the Team Project</Link>
               {isAdmin && (
                 <form action={undoPlan}>
-                  <button className="btn btn-quiet" style={{ color: "var(--band-fg)", borderColor: "var(--band-fg2)" }}>Undo selection</button>
+                  <button className="btn btn-quiet">Undo selection</button>
                 </form>
               )}
             </div>
@@ -80,23 +73,23 @@ export default async function AnglesPage({ searchParams }: { searchParams: Promi
             <>
               <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 10 }}>
                 {poll.options.map((o) => (
-                  <div key={o.id} style={{ padding: 14, borderRadius: 4, background: "var(--band-card)", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div key={o.id} style={{ padding: 14, borderRadius: 4, border: "1px solid var(--line)", background: "var(--bg)", display: "flex", flexDirection: "column", gap: 8 }}>
                     <span style={{ fontWeight: 500 }}>{o.label}</span>
-                    <div className="bar" style={{ background: "oklch(0.5 0.02 200 / 0.3)" }}>
+                    <div className="bar">
                       <i style={{ width: `${((o.tally.first + o.tally.interested) / maxVotes) * 100}%` }} />
                     </div>
-                    <span className="mono" style={{ fontSize: 12, color: "var(--band-fg2)" }}>
+                    <span className="mono muted" style={{ fontSize: 12 }}>
                       {o.tally.first} first · {o.tally.interested} interested · {o.tally.not} not
                     </span>
                     <StanceControl target={`option:${o.id}`} mine={o.mine} label={`Your vote on ${o.label}`} />
                     {isAdmin && (
                       <div style={{ display: "flex", gap: 12, justifyContent: "space-between" }}>
                         <form action={selectPlan.bind(null, o.id)}>
-                          <button className="linkbtn" style={{ color: "var(--band-accent)" }}>Select this plan</button>
+                          <button className="linkbtn">Select this plan</button>
                         </form>
                         {o.sort >= 100 && (
                           <form action={removePollOption.bind(null, o.id)}>
-                            <button className="linkbtn" style={{ color: "var(--band-fg2)" }}>Remove</button>
+                            <button className="linkbtn" style={{ color: "var(--muted)" }}>Remove</button>
                           </form>
                         )}
                       </div>
@@ -106,33 +99,25 @@ export default async function AnglesPage({ searchParams }: { searchParams: Promi
               </div>
               {isAdmin && (
                 <form action={addPollOption} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <input name="label" className="input" placeholder="Add an option, e.g. G + F: paraphraser arm" aria-label="New poll option" style={{ flex: "1 1 260px", background: "var(--band-card)", color: "var(--band-fg)", borderColor: "transparent" }} />
+                  <input name="label" className="input" placeholder="Add an option, e.g. G + F: paraphraser arm" aria-label="New poll option" style={{ flex: "1 1 260px" }} />
                   <button className="btn btn-fill">Add option</button>
                 </form>
               )}
-              <span style={{ fontSize: 12, color: "var(--band-fg2)" }}>
-                Selecting a plan makes its angles the <b style={{ color: "var(--band-fg)" }}>Team Project</b>, moves every other angle to the archive, and records the choice on the decisions board. An admin can undo it.
+              <span className="muted" style={{ fontSize: 12 }}>
+                Selecting a plan makes its angles the <b style={{ color: "var(--fg)" }}>Team Project</b>, moves every other angle to the archive, and records the choice on the decisions board. An admin can undo it.
               </span>
             </>
           )}
         </section>
       )}
 
-      <nav className="tabs" aria-label="Filter by track">
-        {TRACKS.map(([k, label]) => (
-          <Link key={k} href={k === "all" ? "/angles" : `/angles?track=${k}`} aria-current={track === k ? "page" : undefined}>
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <section className="grid" aria-label="Angles" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))" }}>
-        {shown.map((a) => {
+      <TrackFilter initial={["1", "2", "3"].includes(track) ? track : "all"}>
+        {angles.map((a) => {
           const target = `angle:${a.slug}`;
           const t = views.tallies[target] ?? { first: 0, interested: 0, not: 0 };
           const mine = views.mine[target] ?? null;
           return (
-            <article key={a.id} id={`angle-${a.slug}`} className={`card${mine === "first" || a.status === "team_project" ? " pick1" : ""}`}>
+            <article key={a.id} id={`angle-${a.slug}`} data-tracks={[...new Set(((a.data.tracks as string[]) ?? []).map((tr) => tr.split(".")[0]))].join(" ")} className={`card${mine === "first" || a.status === "team_project" ? " pick1" : ""}`}>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                 <span className="idbox">{String(a.data.letter ?? a.slug.toUpperCase())}</span>
                 {((a.data.tracks as string[]) ?? []).map((tr) => (
@@ -161,7 +146,7 @@ export default async function AnglesPage({ searchParams }: { searchParams: Promi
             </article>
           );
         })}
-      </section>
+      </TrackFilter>
 
       {combo && (
         <section className="card" aria-label="Suggested combination">

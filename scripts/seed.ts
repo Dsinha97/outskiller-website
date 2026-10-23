@@ -2,8 +2,9 @@
  * Loads content/seed.json into the database (Neon if DATABASE_URL is set, else local PGlite).
  *   npx tsx scripts/seed.ts
  *
- * Safe to re-run: wiki pages are refreshed when their sha changes; brief items, polls,
- * decisions, roles and the checklist are only inserted when missing, so in-app edits stay.
+ * Safe to re-run: wiki pages are refreshed when their sha changes. Brief items are refreshed
+ * when the seed text changed and nobody has edited them in the app; polls, decisions, roles
+ * and the checklist are only inserted when missing, so in-app edits stay.
  * On an empty users table it prints a one-time bootstrap invite link.
  */
 import { createHash, randomBytes } from "node:crypto";
@@ -28,18 +29,28 @@ async function main() {
 
   let inserted = 0;
   let refreshed = 0;
+  let briefRefreshed = 0;
+  let keptEdited = 0;
   const allItems = [
     ...seed.items,
     ...seed.ideas.map((idea, i) => ({ kind: "idea", slug: `idea-${i + 1}`, title: idea.label.replace(/\*\*|\[|\]\([^)]*\)/g, "").slice(0, 140), body: idea.label, data: { theme: idea.theme }, origin: "wiki", sort: i, status: "candidate", sha: undefined })),
   ];
   for (const it of allItems) {
-    const [existing] = await d.select({ id: items.id, sha: items.sha, origin: items.origin }).from(items).where(and(eq(items.kind, it.kind), eq(items.slug, it.slug)));
+    if (it.origin === "brief") it.sha = createHash("sha256").update(JSON.stringify([it.title, it.body, it.data])).digest("hex");
+    const [existing] = await d.select({ id: items.id, sha: items.sha, origin: items.origin, updatedBy: items.updatedBy }).from(items).where(and(eq(items.kind, it.kind), eq(items.slug, it.slug)));
     if (!existing) {
       await d.insert(items).values({ kind: it.kind, slug: it.slug, title: it.title, body: it.body, data: it.data, origin: it.origin, sha: it.sha ?? null, sort: it.sort, status: it.status ?? "active" });
       inserted++;
     } else if (it.origin === "wiki" && existing.origin === "wiki" && it.sha && existing.sha !== it.sha) {
       await d.update(items).set({ title: it.title, body: it.body, data: it.data, sha: it.sha, updatedAt: new Date(), version: sql`${items.version} + 1` }).where(eq(items.id, existing.id));
       refreshed++;
+    } else if (it.origin === "brief" && existing.origin === "brief" && existing.sha !== it.sha) {
+      // updatedBy is only set by in-app edits and approvals; those always win over the seed.
+      if (existing.updatedBy) keptEdited++;
+      else {
+        await d.update(items).set({ title: it.title, body: it.body, data: it.data, sha: it.sha, updatedAt: new Date() }).where(eq(items.id, existing.id));
+        briefRefreshed++;
+      }
     }
   }
 
@@ -59,7 +70,7 @@ async function main() {
     await d.insert(pollOptions).values(seed.poll.options.map((o) => ({ pollId: poll.id, label: o.label, angles: o.angles, sort: o.sort })));
   }
 
-  console.log(`items: ${inserted} inserted, ${refreshed} wiki pages refreshed`);
+  console.log(`items: ${inserted} inserted, ${refreshed} wiki pages refreshed, ${briefRefreshed} brief items refreshed, ${keptEdited} kept (edited in the app)`);
 
   if ((await d.select({ n: sql<number>`count(*)` }).from(users))[0].n == 0) {
     const token = randomBytes(18).toString("base64url");
