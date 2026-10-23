@@ -44,7 +44,7 @@ async function main() {
     } else if (it.origin === "wiki" && existing.origin === "wiki" && it.sha && existing.sha !== it.sha) {
       await d.update(items).set({ title: it.title, body: it.body, data: it.data, sha: it.sha, updatedAt: new Date(), version: sql`${items.version} + 1` }).where(eq(items.id, existing.id));
       refreshed++;
-    } else if (it.origin === "brief" && existing.origin === "brief" && existing.sha !== it.sha) {
+    } else if (it.origin === "brief" && existing.origin === "brief" && (existing.sha !== it.sha || existing.updatedBy)) {
       // updatedBy is only set by in-app edits and approvals; those always win over the seed.
       if (existing.updatedBy) {
         // An in-app edit (links, recording) must not lose the seed's content: fill only what is empty.
@@ -56,7 +56,7 @@ async function main() {
           await d.update(items).set({ body: fillBody ? it.body : existing.body, data, sha: it.sha, updatedAt: new Date(), version: sql`${items.version} + 1` }).where(eq(items.id, existing.id));
           briefRefreshed++;
         } else keptEdited++;
-      } else {
+      } else if (existing.sha !== it.sha) {
         await d.update(items).set({ title: it.title, body: it.body, data: it.data, sha: it.sha, updatedAt: new Date() }).where(eq(items.id, existing.id));
         briefRefreshed++;
       }
