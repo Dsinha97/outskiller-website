@@ -151,6 +151,13 @@ const links = [
   ["compute", "Compute", "Modal for fan-out across seeds; results show in Library → Results", ""],
   ["calls", "Calls", "Optional, short, and scheduled inside the shared awake band", ""],
 ];
+// The team's Drive and Discord links are recorded in wiki/people/our-team.md; they go into the
+// database through the seed, so they never land in this public repo.
+const teamPage = readFileSync(join(WIKI, "people/our-team.md"), "utf8");
+const found = (re: RegExp) => teamPage.match(re)?.[0] ?? "";
+links[1][3] ||= found(/https:\/\/drive\.google\.com\/[^\s>)]+/);
+const discord = found(/https:\/\/discord\.gg\/[^\s>)]+/);
+if (discord) links.splice(1, 0, ["discord", "Discord", "Alternative space for collaboration and calls", discord]);
 links.forEach(([slug, title, body, url], i) => items.push({ kind: "link", slug, title, body, data: { url }, origin: "brief", sort: i }));
 
 // ---------- wiki ----------
