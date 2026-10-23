@@ -1,0 +1,304 @@
+/**
+ * Builds content/seed.json from the team brief and the sprint wiki, both read from the
+ * parent workspace. Runs locally only; content/ is git-ignored because the repo is public.
+ *
+ *   npx tsx scripts/build-seed.ts
+ *   BRIEF=... WIKI=... npx tsx scripts/build-seed.ts   (override the source paths)
+ */
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, posix, relative, resolve, sep } from "node:path";
+import vm from "node:vm";
+import matter from "gray-matter";
+
+const ROOT = resolve(__dirname, "..");
+const BRIEF = resolve(process.env.BRIEF ?? join(ROOT, "../website-design/ai-collusion-team-brief.html"));
+const WIKI = resolve(process.env.WIKI ?? join(ROOT, "../wiki"));
+const OUT = join(ROOT, "content/seed.json");
+
+type SeedItem = {
+  kind: string;
+  slug: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  status?: string;
+  origin: "brief" | "wiki";
+  sha?: string;
+  sort: number;
+};
+
+const items: SeedItem[] = [];
+const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+const slugify = (s: string) =>
+  s.toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 80);
+
+// ---------- brief ----------
+
+// The brief misnames the talk 1 speaker; the source notes and the wiki say Joan Velja.
+const html = readFileSync(BRIEF, "utf8").replace(/\r\n/g, "\n").replace(/Yoann/g, "Joan Velja");
+const decode = (s: string) =>
+  s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ");
+
+/** Small HTML-to-markdown pass for the brief's hand-written cards and boxes. */
+function md(fragment: string): string {
+  return decode(
+    fragment
+      .replace(/<a [^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g, "[$2]($1)")
+      .replace(/<(strong|b)>(.*?)<\/\1>/g, "**$2**")
+      .replace(/<(em|i)>(.*?)<\/\1>/g, "*$2*")
+      .replace(/<code>(.*?)<\/code>/g, "`$1`")
+      .replace(/<li>/g, "\n- ")
+      .replace(/<\/(p|ul|h3|div)>/g, "\n\n")
+      .replace(/<br\s*\/?>/g, "\n")
+      .replace(/<[^>]+>/g, ""),
+  )
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function scriptConst(name: string, endMarker: RegExp): string {
+  const start = html.indexOf(`const ${name}=`);
+  if (start < 0) throw new Error(`brief: const ${name} not found`);
+  const rest = html.slice(start);
+  const m = rest.match(endMarker);
+  if (!m || m.index === undefined) throw new Error(`brief: end of ${name} not found`);
+  return rest.slice(0, m.index + m[0].length);
+}
+
+// The brief is our own file; evaluating its data literals in an empty context is safe.
+const ctx = vm.createContext({});
+vm.runInContext(scriptConst("SOURCES", /\];\n/).replace("const SOURCES", "var SOURCES"), ctx);
+vm.runInContext(scriptConst("ANGLES", /\}\];\n/).replace("const ANGLES", "var ANGLES"), ctx);
+vm.runInContext(scriptConst("REFINE", /\};\n/).replace("const REFINE", "var REFINE"), ctx);
+vm.runInContext(scriptConst("PACKAGES", /\];\n/).replace("const PACKAGES", "var PACKAGES"), ctx);
+vm.runInContext(scriptConst("DECISIONS", /\]\];\n/).replace("const DECISIONS", "var DECISIONS"), ctx);
+const { SOURCES, ANGLES, REFINE, PACKAGES, DECISIONS } = ctx as unknown as {
+  SOURCES: Record<string, string>[];
+  ANGLES: Record<string, unknown>[];
+  REFINE: Record<string, string>;
+  PACKAGES: string[][];
+  DECISIONS: [string, string, string[]][];
+};
+
+ANGLES.forEach((a, i) => {
+  const id = String(a.id);
+  const body = [
+    `**Question.** ${a.q}`,
+    `**Design.** ${a.design}`,
+    a.needs ? `**Needs.** ${a.needs}` : "",
+    a.fit ? `**Fit.** ${a.fit}` : "",
+    REFINE[id] ? `**From the talks.** ${REFINE[id]}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  items.push({
+    kind: "angle",
+    slug: id.toLowerCase(),
+    title: String(a.title),
+    body,
+    data: { letter: id, tracks: a.tracks, source: a.src ?? "", question: a.q, recommended: Boolean(a.rec), refine: REFINE[id] ?? "" },
+    origin: "brief",
+    sort: i,
+  });
+});
+
+// Team cards
+const people = [...html.matchAll(/<article class="card person[^"]*">([\s\S]*?)<\/article>/g)];
+people.forEach((m, i) => {
+  const inner = m[1];
+  const tag = decode(inner.match(/<span class="tag">(.*?)<\/span>/)?.[1] ?? "");
+  const name = decode(inner.match(/<h3>(.*?)<\/h3>/)?.[1] ?? `Member ${i + 1}`);
+  const chip = decode((inner.match(/<p class="chip">(.*?)<\/p>/)?.[1] ?? "").replace(/<[^>]+>/g, ""));
+  const body = md(inner.replace(/<span class="tag">.*?<\/span>/, "").replace(/<h3>.*?<\/h3>/, "").replace(/<p class="chip">.*?<\/p>/, ""));
+  items.push({ kind: "person", slug: slugify(name.split(" ")[0]), title: name, body, data: { location: tag, suggested: chip }, origin: "brief", sort: i });
+});
+
+function box(heading: string): string {
+  const re = new RegExp(`<h3>${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</h3>([\\s\\S]*?)</(div|article)>`);
+  const m = html.match(re);
+  if (!m) throw new Error(`brief: box "${heading}" not found`);
+  return md(m[1]);
+}
+const notes: [string, string, string][] = [
+  ["suggested-combination", "Suggested combination", box("Suggested combination")],
+  ["what-the-talks-mean", "What the talks mean for us", box("What this means for us")],
+  ["new-from-talk-1", "New from talk 1", box("New from talk 1")],
+  ["engineering", "On engineering", md(html.match(/<div class="note"><strong>On engineering:<\/strong>([\s\S]*?)<\/div>/)?.[1] ?? "")],
+  ["reading-discipline", "Reading discipline", md(html.match(/<div class="note"><strong>Reading discipline\.<\/strong>([\s\S]*?)<\/div>/)?.[1] ?? "")],
+];
+notes.forEach(([slug, title, body], i) => items.push({ kind: "note", slug, title, body, data: {}, origin: "brief", sort: i }));
+
+// Workflow phases, anchored in UTC (US Eastern midnights, EDT = UTC-4).
+const phaseText = (h: string) => md(html.match(new RegExp(`<div class="phase"><h3>${h}</h3><p>([\\s\\S]*?)</p></div>`))?.[1] ?? "");
+const phases = [
+  ["before-friday", "Before Friday", "2026-10-22T04:00:00Z", "2026-10-23T04:00:00Z", phaseText("Before Friday"), ""],
+  ["friday", "Friday", "2026-10-23T04:00:00Z", "2026-10-24T04:00:00Z", phaseText("Friday"), "Reproduce the positive control first: scripted collusive pairs flagged, benign pairs not. Then change one lever at a time."],
+  ["saturday", "Saturday", "2026-10-24T04:00:00Z", "2026-10-25T04:00:00Z", phaseText("Saturday"), ""],
+  ["sunday", "Sunday", "2026-10-25T04:00:00Z", "2026-10-26T11:59:00Z", phaseText("Sunday"), ""],
+];
+phases.forEach(([slug, title, startsAt, endsAt, body, note], i) =>
+  items.push({ kind: "phase", slug, title, body, data: { startsAt, endsAt, note, wiki: slug === "friday" ? "topics/positive-control" : "" }, origin: "brief", sort: i }),
+);
+
+// Logistics links; URLs the repo must not carry are left blank and filled in the app.
+const links = [
+  ["whatsapp", "WhatsApp group", "Day-to-day coordination and quick decisions", ""],
+  ["shared-drive", "Shared drive", "Decisions, research question, rubric and the draft write-up", ""],
+  ["github-repo", "GitHub repo", "Code, configs and logged results", "https://github.com/Dsinha97/outskiller-ai-safety-sprint"],
+  ["sprint-page", "Sprint page", "Apart Research: schedule, Discord, submission form", "https://apartresearch.com/sprints/ai-collusion-research-sprint-2026-10-23-to-2026-10-25"],
+  ["compute", "Compute", "Modal for fan-out across seeds; results show in Library → Results", ""],
+  ["calls", "Calls", "Optional, short, and scheduled inside the shared awake band", ""],
+];
+links.forEach(([slug, title, body, url], i) => items.push({ kind: "link", slug, title, body, data: { url }, origin: "brief", sort: i }));
+
+// ---------- wiki ----------
+
+function walk(dir: string): string[] {
+  return readdirSync(dir).flatMap((f) => {
+    const p = join(dir, f);
+    return statSync(p).isDirectory() ? walk(p) : p.endsWith(".md") ? [p] : [];
+  });
+}
+
+const SECTIONS = new Set(["papers", "environments", "questions", "tracks", "themes", "topics", "people", "sprint"]);
+const wikiFiles = walk(WIKI).filter((p) => relative(WIKI, p) !== "index.md" && !relative(WIKI, p).startsWith("exports"));
+
+/** Wiki-relative links become app routes; links into sources/ become plain text. */
+function rewrite(body: string, file: string): string {
+  const fromDir = posix.dirname(relative(WIKI, file).split(sep).join("/"));
+  return body
+    .replace(/!\[[^\]]*\]\([^)]*\)\n?/g, "")
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (whole, text: string, href: string) => {
+      if (/^(https?:|mailto:)/.test(href)) return whole;
+      const [path, hash] = href.split("#");
+      const target = posix.normalize(posix.join(fromDir, decodeURIComponent(path)));
+      if (target.startsWith("../") || target.startsWith("sources/")) return text;
+      if (target === "index.md") return `[${text}](/library)`;
+      const [section, ...rest] = target.replace(/\.md$/, "").split("/");
+      if (!SECTIONS.has(section) || rest.length !== 1) return text;
+      return `[${text}](/library/${section}/${rest[0]}${hash ? `#${hash}` : ""})`;
+    });
+}
+
+const wikiPages = new Map<string, { title: string; summary: string; section: string }>();
+const ideas: { label: string; theme: string }[] = [];
+let checklist: string[] = [];
+
+for (const file of wikiFiles) {
+  const raw = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+  const { data: fm, content } = matter(raw);
+  const relPath = relative(WIKI, file).split(sep).join("/");
+  const [section, name] = relPath.replace(/\.md$/, "").split("/");
+  if (!SECTIONS.has(section) || !name) continue;
+  const lines = content.replace(/^\s*#\s+.*\n/, "").split("\n");
+  const summaryIdx = lines.findIndex((l) => l.startsWith(">"));
+  const summary = summaryIdx >= 0 ? lines[summaryIdx].replace(/^>\s*/, "").trim() : "";
+  if (summaryIdx >= 0) lines.splice(summaryIdx, 1);
+  const body = rewrite(lines.join("\n").trim(), file);
+  const slug = `${section}/${name}`;
+  const title = String(fm.title ?? name);
+  wikiPages.set(slug, { title, summary: rewrite(summary, file), section });
+  items.push({
+    kind: "wiki",
+    slug,
+    title,
+    body,
+    data: { section, type: fm.type ?? section, tags: fm.tags ?? [], updated: fm.updated ? String(fm.updated).slice(0, 10) : "", summary: rewrite(summary, file) },
+    origin: "wiki",
+    sha: sha(raw),
+    sort: 0,
+  });
+
+  if (section === "themes") {
+    const gaps = content.split(/\n## /).find((s) => s.startsWith("Open gaps"));
+    gaps
+      ?.split("\n")
+      .filter((l) => /^[-*]\s+/.test(l))
+      .forEach((l) => ideas.push({ label: rewrite(l.replace(/^[-*]\s+/, "").trim(), file), theme: slug }));
+  }
+  if (slug === "sprint/submission-requirements") {
+    checklist = content.split("\n").filter((l) => l.startsWith("- [ ]")).map((l) => l.replace("- [ ]", "").trim());
+  }
+}
+
+// Sources: the brief's 42 cards, linked to wiki paper pages where the titles match.
+const norm = (s: string) => new Set(s.replace(/\(.*?\)/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 3));
+const jaccard = (a: Set<string>, b: Set<string>) => {
+  const inter = [...a].filter((x) => b.has(x)).length;
+  return inter / (a.size + b.size - inter || 1);
+};
+const paperPages = [...wikiPages.entries()].filter(([, v]) => v.section === "papers");
+const matched = new Set<string>();
+SOURCES.forEach((s, i) => {
+  let best = "";
+  let score = 0;
+  if (s.type === "Research paper") {
+    for (const [slug, p] of paperPages) {
+      const j = jaccard(norm(s.title), norm(p.title));
+      if (j > score) [best, score] = [slug, j];
+    }
+  }
+  const wiki = score >= 0.34 ? best : "";
+  if (wiki) matched.add(wiki);
+  items.push({ kind: "source", slug: slugify(s.title), title: s.title, body: s.summary ?? "", data: { ...s, wiki }, origin: "brief", sort: i });
+});
+paperPages
+  .filter(([slug]) => !matched.has(slug))
+  .forEach(([slug, p], i) =>
+    items.push({
+      kind: "source",
+      slug: slugify(p.title),
+      title: p.title,
+      body: p.summary,
+      data: { type: "Research paper", wiki: slug, summary: p.summary, scope: "From the sprint wiki; not in the original brief's library." },
+      origin: "wiki",
+      sort: SOURCES.length + i,
+    }),
+  );
+
+// Talks and sessions, from wiki/sprint/schedule.md (times there are given in ET and UTC).
+const talks = [
+  { slug: "talk-1", speaker: "Joan Velja", aff: "Oxford", title: "How concerned should we be by steganography?", at: "2026-10-22T14:15:00Z", mins: 54, wiki: "sprint/talk-1-steganographic-collusion", people: ["people/joan-velja"], papers: ["papers/hidden-in-plain-text"], note: "The original team brief called this speaker \"Yoann\"; the source notes and the wiki name Joan Velja." },
+  { slug: "talk-2", speaker: "Sumeet Motwani", aff: "Oxford", title: "We're Not Prepared for Steganographic Collusion", at: "2026-10-22T17:15:00Z", mins: 41, wiki: "sprint/talk-2-not-prepared-for-steganographic-collusion", people: ["people/sumeet-motwani"], papers: ["papers/secret-collusion-ai-agents"] },
+  { slug: "kemeklis", speaker: "Jurgis Kemeklis", aff: "MIT AI Alignment, Redwood", title: "Mitigating Insider threats from AIs with AI control", at: "2026-10-23T15:15:00Z", people: ["people/jurgis-kemeklis"] },
+  { slug: "anwar", speaker: "Usman Anwar", aff: "Cambridge", title: "Challenges in Detecting Steganography in LLM Transcripts", at: "2026-10-23T17:15:00Z", people: ["people/usman-anwar"] },
+  { slug: "bagdasarian-nakamura", speaker: "Eugene Bagdasarian and Mason Nakamura", aff: "UMass Amherst", title: "Colosseum authors (title not announced)", at: "2026-10-23T18:15:00Z", people: ["people/eugene-bagdasarian", "people/mason-nakamura"], papers: ["papers/colosseum-auditing-collusion"] },
+  { slug: "shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "When Agents Lie author (title not announced)", at: "2026-10-24T00:15:00Z", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
+  { slug: "nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
+  { slug: "nyc-hub", speaker: "NYC hub at Collider", aff: "In person", title: "NYC hub open (Sat 10am to Sun 6pm ET)", at: "2026-10-24T14:00:00Z", event: true },
+  { slug: "lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T15:00:00Z", people: ["people/matthew-lee"] },
+];
+talks.forEach((t, i) => {
+  const page = t.wiki ? items.find((x) => x.kind === "wiki" && x.slug === t.wiki) : undefined;
+  items.push({
+    kind: "talk",
+    slug: t.slug,
+    title: `${t.speaker}: ${t.title}`,
+    body: page?.body ?? "",
+    data: { speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-23T00:00:00Z"), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
+    origin: "brief",
+    sort: i,
+  });
+});
+
+const angleLetters = (label: string) => [...new Set((label.split(":")[0].match(/\b[A-H]\b/g) ?? []))];
+const angleDecision = DECISIONS.find(([k]) => k === "angle");
+const seed = {
+  generatedAt: new Date().toISOString(),
+  inputs: { brief: relative(ROOT, BRIEF), wiki: relative(ROOT, WIKI), wikiPages: wikiPages.size },
+  items,
+  ideas,
+  checklist,
+  roles: { names: ["Liezl", "Carl", "Deepayan", "Prashanth", "Vidhya"], packages: PACKAGES },
+  decisions: DECISIONS.filter(([k]) => k !== "angle").map(([key, label, options], i) => ({ key, label, options, sort: i })),
+  poll: { title: "Which plan do we run this weekend?", options: (angleDecision?.[2] ?? []).map((label, i) => ({ label, angles: angleLetters(label), sort: i })) },
+};
+
+mkdirSync(dirname(OUT), { recursive: true });
+writeFileSync(OUT, JSON.stringify(seed, null, 2));
+const count = (k: string) => items.filter((x) => x.kind === k).length;
+console.log(
+  `seed: ${items.length} items · wiki ${count("wiki")} · sources ${count("source")} (${matched.size} linked to wiki papers) · angles ${count("angle")} · talks ${count("talk")} · people ${count("person")} · ideas ${ideas.length} · checklist ${checklist.length}`,
+);
