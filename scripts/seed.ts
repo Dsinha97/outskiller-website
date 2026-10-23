@@ -37,7 +37,7 @@ async function main() {
   ];
   for (const it of allItems) {
     if (it.origin === "brief") it.sha = createHash("sha256").update(JSON.stringify([it.title, it.body, it.data])).digest("hex");
-    const [existing] = await d.select({ id: items.id, sha: items.sha, origin: items.origin, updatedBy: items.updatedBy, body: items.body }).from(items).where(and(eq(items.kind, it.kind), eq(items.slug, it.slug)));
+    const [existing] = await d.select({ id: items.id, sha: items.sha, origin: items.origin, updatedBy: items.updatedBy, body: items.body, data: items.data }).from(items).where(and(eq(items.kind, it.kind), eq(items.slug, it.slug)));
     if (!existing) {
       await d.insert(items).values({ kind: it.kind, slug: it.slug, title: it.title, body: it.body, data: it.data, origin: it.origin, sha: it.sha ?? null, sort: it.sort, status: it.status ?? "active" });
       inserted++;
@@ -47,9 +47,13 @@ async function main() {
     } else if (it.origin === "brief" && existing.origin === "brief" && existing.sha !== it.sha) {
       // updatedBy is only set by in-app edits and approvals; those always win over the seed.
       if (existing.updatedBy) {
-        // An in-app edit (links, recording) must not lose the seed's notes: fill an empty body only.
-        if (!existing.body.trim() && it.body.trim()) {
-          await d.update(items).set({ body: it.body, sha: it.sha, updatedAt: new Date(), version: sql`${items.version} + 1` }).where(eq(items.id, existing.id));
+        // An in-app edit (links, recording) must not lose the seed's content: fill only what is empty.
+        const empty = (v: unknown) => v == null || v === "" || v === false || (Array.isArray(v) && !v.length);
+        const data = { ...existing.data };
+        for (const [k, v] of Object.entries(it.data)) if (empty(data[k]) && !empty(v)) data[k] = v;
+        const fillBody = !existing.body.trim() && it.body.trim();
+        if (fillBody || JSON.stringify(data) !== JSON.stringify(existing.data)) {
+          await d.update(items).set({ body: fillBody ? it.body : existing.body, data, sha: it.sha, updatedAt: new Date(), version: sql`${items.version} + 1` }).where(eq(items.id, existing.id));
           briefRefreshed++;
         } else keptEdited++;
       } else {
