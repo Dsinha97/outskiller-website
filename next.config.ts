@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // PGlite (local dev database) ships WASM and data files that must not be bundled.
-  serverExternalPackages: ["@electric-sql/pglite"],
+  // `ws` must also stay unbundled: webpack drops its optional native helpers and frames fail.
+  serverExternalPackages: ["@electric-sql/pglite", "ws"],
   // No remote or user images: the image optimizer stays off, removing its attack surface.
   images: { unoptimized: true },
   poweredByHeader: false,

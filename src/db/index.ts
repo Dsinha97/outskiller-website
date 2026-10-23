@@ -16,8 +16,8 @@ async function connect(): Promise<DB> {
   if (url) {
     const { Pool, neonConfig } = await import("@neondatabase/serverless");
     const { drizzle } = await import("drizzle-orm/neon-serverless");
-    const ws = (await import("ws")).default;
-    neonConfig.webSocketConstructor = ws;
+    // Node 22+ ships a WebSocket; bundling `ws` into server chunks breaks its frame masking.
+    neonConfig.webSocketConstructor = globalThis.WebSocket ?? (await import("ws")).default;
     return drizzle(new Pool({ connectionString: url }), { schema }) as unknown as DB;
   }
   if (process.env.VERCEL) throw new Error("DATABASE_URL is not set for this deployment. Connect Neon to the project, then redeploy.");
