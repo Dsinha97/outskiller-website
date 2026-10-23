@@ -15,4 +15,6 @@ if (/\/(wiki|sources)\/|ai-collusion-team-brief\.html$/.test(path) && !/\/wiki\/
   const r = spawnSync("npm", ["run", "sync"], { cwd: root, shell: true, encoding: "utf8" });
   const last = (r.stdout || "").trim().split("\n").slice(-2).join(" | ");
   console.log(r.status === 0 ? `website seed synced (${last})` : `website seed sync failed: ${(r.stderr || "").slice(-300)}`);
+  const p = spawnSync("npm", ["run", "sync:prod"], { cwd: root, shell: true, encoding: "utf8" });
+  console.log((p.stdout || "").trim().split("\n").slice(-1)[0]);
 }

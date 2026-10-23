@@ -13,7 +13,8 @@
     "seed:build": "tsx scripts/build-seed.ts",
     "seed": "tsx scripts/seed.ts",
     "sync": "npm run seed:build && npm run seed",
-    "export:activity": "tsx scripts/export-activity.ts"
+    "export:activity": "tsx scripts/export-activity.ts",
+    "sync:prod": "node scripts/sync-prod.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.11",
