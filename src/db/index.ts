@@ -20,6 +20,7 @@ async function connect(): Promise<DB> {
     neonConfig.webSocketConstructor = ws;
     return drizzle(new Pool({ connectionString: url }), { schema }) as unknown as DB;
   }
+  if (process.env.VERCEL) throw new Error("DATABASE_URL is not set for this deployment. Connect Neon to the project, then redeploy.");
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
   const dir = process.env.PGLITE_DIR ?? ".data/pglite";

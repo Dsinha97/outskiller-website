@@ -46,7 +46,7 @@ Wiki pages are fixed **in the wiki**, then re-imported (`npm run seed:build && n
    - `AUTH_SECRET`: 32+ random characters.
    - `ADMIN_EMAILS` (optional): comma-separated emails that get admin on sign-up.
    - `RESULTS_REPO` (optional): defaults to `Dsinha97/outskiller-ai-safety-sprint`.
-4. From your machine, with the production `DATABASE_URL` and `BASE_URL=https://<your-domain>` in the shell, run `npm run db:migrate` and `npm run seed`. Open the printed bootstrap link to create the first admin account.
+4. Vercel runs the migrations on every build (`vercel-build`). From your machine, with the production `DATABASE_URL` and `BASE_URL=https://<your-domain>` in the shell, run `npm run seed:build` and `npm run seed`. Open the printed bootstrap link to create the first admin account.
 5. On **Members & invites**, create the team invite link and post it. The seed fills the shared Drive and Discord links from the wiki's team page. Add the WhatsApp link on the Workflow page. All of these live in the database, not in this repo.
 
 ## Scripts
