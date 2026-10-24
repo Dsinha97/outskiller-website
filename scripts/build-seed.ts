@@ -404,7 +404,7 @@ const talks: { slug: string; luma: string; speaker: string; aff: string; title: 
   { slug: "shi", luma: "https://luma.com/ai-collusion-research-sprint-jerick-shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "Lies, Broken Promises, and Silence", at: "2026-10-24T00:15:00Z", wiki: "sprint/talk-7-lies-broken-promises-and-silence", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
   { slug: "nguyen", luma: "https://luma.com/ai-collusion-research-sprint-khanh-linh-nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", wiki: "sprint/talk-8-overview-of-collusion-research", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
   { slug: "nyc-hub", luma: "https://luma.com/ai-collusion-research-sprint-2026-nyc", speaker: "NYC hub at Collider", aff: "In person", title: "NYC hub open (Sat 10am to Sun 6pm ET)", at: "2026-10-24T14:00:00Z", event: true },
-  { slug: "lee", luma: "https://luma.com/ai-collusion-research-sprint-matthew-lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T15:00:00Z", people: ["people/matthew-lee"] },
+  { slug: "lee", luma: "https://luma.com/ai-collusion-research-sprint-matthew-lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T18:00:00Z", note: "Moved from 11:00am to 2:00pm ET (calendar invite updated Oct 24).", people: ["people/matthew-lee"] },
 ];
 talks.forEach((t, i) => {
   items.push({
