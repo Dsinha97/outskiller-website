@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function AuthShell({ eyebrow, title, emphasis, lede, children }: { eyebrow: string; title: string; emphasis: string; lede: React.ReactNode; children: React.ReactNode }) {
@@ -6,7 +7,9 @@ export function AuthShell({ eyebrow, title, emphasis, lede, children }: { eyebro
       <div style={{ width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div className="brand" style={{ padding: 0 }}>
-            <span className="mark" aria-hidden="true">O</span>
+            <span className="mark" aria-hidden="true">
+            <Image src="/outskiller-mark-96.png" alt="" width={30} height={30} priority />
+          </span>
             <span>
               <b>Outskiller</b>
               <small>AI Collusion Sprint HQ</small>

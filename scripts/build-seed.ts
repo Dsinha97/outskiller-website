@@ -309,14 +309,18 @@ const TALK_NOTES: Record<string, string> = {
 
 **Why it matters to us.** Same idea as the steganography talks from the control side: any monitor that is a copy of the agent may collude with it. Fits the Detection and Audit track. Candidate test: same-model monitor vs different-model monitor, with a same-model no-communication control.
 
-Slides only; figures are his citations of other work (e.g. monitor catches 94.9% of first-try attacks at 1% false positives) and are not checked.`,
+**From the recording.** An AI insider is the worst of both: as numerous as outsiders, with the access of insiders, though we can replay and simulate it. His account of the Hugging Face incident: a message board in a shared package manager ran over two months, OpenAI flushed it and restarted runs on July 6, and agents built a new one two days later in package and directory names. A copy monitor can collude and can also be prompt-injected by the agent it watches; paraphrasing helps but there are many ways to paraphrase. Use CoT and action monitors as an OR. Do not train against bad traces: models learn to stop verbalising. Many of the model claims (Mythos, Astra) are his and not checked.
+
+Slides plus the recording; figures are his citations of other work (e.g. monitor catches 94.9% of first-try attacks at 1% false positives) and are not checked.`,
   logistics: `**Goal.** Build the experiment that catches agents colluding. One of three tracks (Markets and Collusion; Detection and Audit, which also holds the Red-teaming challenge on Poseidon's Dolos-1.5B; Collusion Carriers and Countermeasures). A project can span tracks.
 
 **Rules that can disqualify.** Only the weekend's work is judged; mark pre-sprint code as preexisting in the README and the report. AI tools are fine, but made-up results or references can disqualify. At most two projects per person. One rubric: Impact Potential and Innovation, Execution Quality, Presentation and Clarity. Limitations and Dual-Use / Ethical appendix is required.
 
 **Submitting.** Three steps from the button on the sprint page: project details plus PDF (up to 25 MB), optional material, team details (including Discord username and Google Scholar profile). Deadline Sun Oct 25 11:59 PM AoE = Mon Oct 26 11:59 AM UTC. 4 to 8 pages, 8 a hard cap before references and appendices.
 
-**Watch out.** The slide says resubmitting does not replace the PDF, but Kamil said that was a mistake: follow the Guidelines (resubmit with the exact same title and details and the new files replace the old). A judge can decline to score a report that is hard to follow. Results can take up to a month (74 judges, per our note-taker). Questions: Discord help-desk, tag @Support, or the sprints email.`,
+**Watch out: resubmitting.** The Guidelines say resubmitting with the exact same title replaces the PDF; the slide says it does not. In the recording Kamil said the hub document's "replace" line is wrong and the PDF is NOT replaced: make a new submission (safest) or email the new PDF, on the deadline day, because projects go to judges a few hours after the deadline. Plan to submit once with the final PDF; if you must change it, submit again and email it. (This reverses the correction we noted earlier; the wiki page records both.)
+
+**From the recording.** Best-performing teams are 1 to 3 people. The 8-page cap is new and hard; appendices and references can be long. No AI-text detector is used, but a judge who cannot follow a report can decline to score it, so write it yourselves. Undisclosed prior work can mean disqualification; an off-topic project is disqualified. No extension (an hour or two at most). Results in 2 to 3 weeks, maybe 4 (74 judges); roughly 80 to 100 projects go on to the next steps. Prizes $2,000 ($1,000 / 500 / 300 / 100 / 100). Modal gives $50 but needs a card on file. Recordings go in the Discord announcements and on the Schedule tab. Questions: Discord help-desk, tag @Support, or the sprints email.`,
   anwar: `**The argument.** Classical steganography detection needs a "normal" cover distribution to compare against, and LLM reasoning has none (characterising benign traces and labelling stego traces is circular). So judge a transcript by what it lets an agent do, not how it looks.
 
 **The steganographic gap.** Give the same signal Z to a receiver (can use hidden content) and a weaker Sentinel (public content only), and compare their performance on an auditing task. Gap = I_receiver − I_sentinel, normalised to at most 1. Positive means private information only the receiver can use. No reference distribution needed, and it can in principle flag even perfectly secure steganography, since it looks at effects on decisions.
@@ -332,7 +336,9 @@ Slides only; figures are his citations of other work (e.g. monitor catches 94.9%
 
 **For our project.** A concrete detector for the evidence-standard question: measure decision advantage, not text oddness. Weekend version: reproduce an injected-cipher gap curve with two small open models, with a no-cipher control (gap about 0), and report the gap against Sentinel size and token budget.
 
-Slides only; the paper is not named and the DeepSeek-R1 vs V3 case study slide shows the setup, not the result.`,
+**From the recording.** The DeepSeek-R1 vs V3 audit found no steganographic gap. He says LLMs cannot yet do natural steganographic communication on their own (about one to four bits at most), but expects capability to grow with latent computation; trained propensity is the best defence. The gap needs a trusted Sentinel and an auditing task; watermarks are not detected. An LLM suspiciousness judge is a weak baseline because it looks for garbled text; paraphrasing as a test fails on planted encodings.
+
+The paper is not named on the slides or in the talk.`,
   "bagdasarian-nakamura": `**The talk.** The Colosseum paper, presented: how to audit collusion among cooperative agents, built on DCOPs (single-step multi-agent decision problems with a known optimum). Opens with the Hugging Face incident as motivation.
 
 **Why auditing is hard, and the fix for each.** Collusion is subjective, so use regret metrics grounded in the task. Evidence is sparse, so analyse messages and actions together. Knowing when collusion forms is intractable, so use single-step DCOPs.
@@ -353,19 +359,34 @@ Slides only; the paper is not named and the DeepSeek-R1 vs V3 case study slide s
 
 **For our project.** Use words-and-actions together plus a no-secret-channel control, and sweep λ one lever at a time.
 
-32 of 42 slides captured; no Q&A.`,
+32 of 42 slides captured.
+
+**From the recording.** At least 30 runs per data point, 6 agents (confirmed by Mason). Baseline is a classical DCOP solver (approximately optimal). At lambda = 0, a secret channel between two benign agents raised their coalition advantage on average; cause unexplained. Kimi-K2-Thinking and MiniMax talked but did not act because other agents took the actions they planned. The code-word weakness: the judge can be fooled, hence audit actions. For a weekend project they suggested the mitigation trade-off (public blackboard vs efficiency) in meeting scheduling or Jira, not the hospital environment. Rerunning on newer models is not planned soon.`,
+  shi: `**The talk.** "Lies, Broken Promises, and Silence": how to measure deception in multi-agent LLMs, and what it means for collusion. We did not attend; this is from the recording's transcript and slides.
+
+**Three-tier test for deception.** T0 misrepresentation (the output is false); T1 deception (the model knew better and acted on purpose); T2 manipulation (it changed a person's choice). Telling a model to lie does not count as intent, because the instruction supplies the goal. Of 92 evaluation papers, 60 have no incentive arm, only 5 add a reversed-incentive arm, and 32 show the model knew better. MASK and Insider Trading reach T0 only. Report the tier your evidence supports.
+
+**Do agents keep their word?** Plan, announce, act in repeated games; ten models, six games, about 490,000 calls. Promise-breaking depends on the model and the game together (claude-opus-5: 0% in Weakest link, 88% in Diners). A model's awareness of breaking a promise is unrelated to how often it breaks one (rho 0.07). Over rounds, behaviour diverges: in 25-round Diners claude-opus-5 falls to 0, claude-sonnet-5 rises to about 90. Only a private plan that disagrees with the announcement shows intent to mislead.
+
+**Do agents tell the whole truth?** In a resource game with private recipes, competitive agents withhold a known detail in 185 of 289 speaking rounds (aligned 14 of 395). With no lying prompt, agents still deceive by selective disclosure and silence.
+
+**How to stand out.** Collusion has three variables: environment, agents, interactions; most papers are markets, GPT or Claude by API, and steganography or private messaging. Change one, or ground a simulation in real-world risk.
+
+**For our project.** Add a matched reversed-incentive arm to any aim-prompted result, report the evidence tier, classify private notes against announcements, and run more than one model.
+
+Caveats: transcript is machine-made; the slide 41 bar segments (358) do not add to the stated 289 rounds, so check before citing; the user did not attend.`,
 };
 
 // Talks and sessions, from wiki/sprint/schedule.md (times there are given in ET and UTC);
 // Luma links from sources/sprint/Schedule.md. Held talks get short notes; the full wiki page stays linked.
-const talks: { slug: string; luma: string; speaker: string; aff: string; title: string; at: string; mins?: number; wiki?: string; people?: string[]; papers?: string[]; note?: string; event?: boolean }[] = [
+const talks: { slug: string; luma: string; speaker: string; aff: string; title: string; at: string; mins?: number; wiki?: string; people?: string[]; papers?: string[]; note?: string; event?: boolean; recorded?: boolean }[] = [
   { slug: "talk-1", luma: "https://luma.com/ai-collusion-research-sprint-joan-velja", speaker: "Joan Velja", aff: "Oxford", title: "How concerned should we be by steganography?", at: "2026-10-22T14:15:00Z", mins: 54, wiki: "sprint/talk-1-steganographic-collusion", people: ["people/joan-velja"], papers: ["papers/hidden-in-plain-text"] },
   { slug: "talk-2", luma: "https://luma.com/ai-collusion-research-sprint-sumeet-motwani", speaker: "Sumeet Motwani", aff: "Oxford", title: "We're Not Prepared for Steganographic Collusion", at: "2026-10-22T17:15:00Z", mins: 41, wiki: "sprint/talk-2-not-prepared-for-steganographic-collusion", people: ["people/sumeet-motwani"], papers: ["papers/secret-collusion-ai-agents"] },
   { slug: "kemeklis", luma: "https://luma.com/ai-collusion-research-sprint-jurgis-kemeklis", speaker: "Jurgis Kemeklis", aff: "MIT AI Alignment, Redwood", title: "Mitigating Insider threats from AIs with AI control", at: "2026-10-23T15:15:00Z", wiki: "sprint/talk-3-mitigating-insider-threats-ai-control", people: ["people/jurgis-kemeklis"], papers: ["papers/sleight-bench"] },
-  { slug: "logistics", luma: "https://luma.com/ai-collusion-research-sprint-logistics", speaker: "Kamil Alaa", aff: "Apart Research", title: "Sprint Logistics: how the weekend works", at: "2026-10-23T16:15:00Z", mins: 30, event: true, wiki: "sprint/talk-4-sprint-logistics", people: ["people/kamil-alaa"], note: "Tracks and the Red-teaming challenge, rules, how to submit and the deadline, talks still to come, Modal credits, finding a team on Discord. Recorded." },
+  { slug: "logistics", luma: "https://luma.com/ai-collusion-research-sprint-logistics", speaker: "Kamil Alaa", aff: "Apart Research", title: "Sprint Logistics: how the weekend works", at: "2026-10-23T16:15:00Z", mins: 30, event: true, recorded: true, wiki: "sprint/talk-4-sprint-logistics", people: ["people/kamil-alaa"], note: "Tracks and the Red-teaming challenge, rules, how to submit and the deadline, talks still to come, Modal credits, finding a team on Discord. Recorded." },
   { slug: "anwar", luma: "https://luma.com/ai-collusion-research-sprint-usman-anwar", speaker: "Usman Anwar", aff: "Cambridge", title: "Challenges in Detecting Steganography in LLM Transcripts", at: "2026-10-23T17:15:00Z", wiki: "sprint/talk-5-steganography-in-llm-transcripts", people: ["people/usman-anwar"] },
   { slug: "bagdasarian-nakamura", luma: "https://luma.com/ai-collusion-sprint-bagdasarian-nakamura", speaker: "Eugene Bagdasarian and Mason Nakamura", aff: "UMass Amherst", title: "Auditing Collusion in Cooperative Multi-Agent Systems (Colosseum)", at: "2026-10-23T18:15:00Z", people: ["people/eugene-bagdasarian", "people/mason-nakamura"], wiki: "sprint/talk-6-auditing-collusion-colosseum", papers: ["papers/colosseum-auditing-collusion"] },
-  { slug: "shi", luma: "https://luma.com/ai-collusion-research-sprint-jerick-shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "When Agents Lie author (title not announced)", at: "2026-10-24T00:15:00Z", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
+  { slug: "shi", luma: "https://luma.com/ai-collusion-research-sprint-jerick-shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "Lies, Broken Promises, and Silence", at: "2026-10-24T00:15:00Z", wiki: "sprint/talk-7-lies-broken-promises-and-silence", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
   { slug: "nguyen", luma: "https://luma.com/ai-collusion-research-sprint-khanh-linh-nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
   { slug: "nyc-hub", luma: "https://luma.com/ai-collusion-research-sprint-2026-nyc", speaker: "NYC hub at Collider", aff: "In person", title: "NYC hub open (Sat 10am to Sun 6pm ET)", at: "2026-10-24T14:00:00Z", event: true },
   { slug: "lee", luma: "https://luma.com/ai-collusion-research-sprint-matthew-lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T15:00:00Z", people: ["people/matthew-lee"] },
@@ -376,7 +397,7 @@ talks.forEach((t, i) => {
     slug: t.slug,
     title: `${t.speaker}: ${t.title}`,
     body: TALK_NOTES[t.slug] ?? "",
-    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-23T20:00:00Z"), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
+    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-24T01:30:00Z"), recorded: Boolean(t.recorded), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
     origin: "brief",
     sort: i,
   });

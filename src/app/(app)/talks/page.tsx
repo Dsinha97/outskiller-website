@@ -73,7 +73,7 @@ export default async function TalksPage() {
                     <a href={recording} target="_blank" rel="noreferrer">
                       <b>Recording ↗</b>
                     </a>
-                  ) : past && !t.data.event ? (
+                  ) : past && (!t.data.event || t.data.recorded) ? (
                     <span className="muted">No recording yet</span>
                   ) : null}
                   {((t.data.people as string[]) ?? []).map((p) => (
@@ -88,7 +88,7 @@ export default async function TalksPage() {
                     heading={`Links: ${t.title}`}
                     kind="talk"
                     itemId={t.id}
-                    fields={past && !t.data.event ? ["link", "recording"] : ["link"]}
+                    fields={past ? ["link", "recording"] : ["link"]}
                     initial={{ link, recording }}
                     isAdmin={isAdmin}
                   />

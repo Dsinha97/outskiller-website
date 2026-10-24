@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -53,7 +55,9 @@ export function Sidebar({ user, pending, pollOpen, teamProject }: Props) {
     <aside className="side" aria-label="Sections">
       <div className="topbar">
         <Link className="brand" href="/">
-          <span className="mark" aria-hidden="true">O</span>
+          <span className="mark" aria-hidden="true">
+            <Image src="/outskiller-mark-96.png" alt="" width={30} height={30} priority />
+          </span>
           <span>
             <b>Outskiller</b>
             <small>Sprint HQ</small>
@@ -73,7 +77,9 @@ export function Sidebar({ user, pending, pollOpen, teamProject }: Props) {
         </div>
       </div>
       <Link className="brand wide" href="/">
-        <span className="mark" aria-hidden="true">O</span>
+        <span className="mark" aria-hidden="true">
+            <Image src="/outskiller-mark-96.png" alt="" width={30} height={30} priority />
+          </span>
         <span>
           <b>Outskiller</b>
           <small>AI Collusion Sprint HQ</small>
