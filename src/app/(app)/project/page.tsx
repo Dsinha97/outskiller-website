@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { asc } from "drizzle-orm";
 import { ChangeDialog } from "@/components/ChangeDialog";
 import { Markdown } from "@/components/Markdown";
+import { PilotStatus } from "@/components/PilotStatus";
 import { db, schema } from "@/db";
 import { currentPoll, listItems } from "@/lib/data";
 import { requireUser } from "@/lib/session";
@@ -48,6 +49,8 @@ export default async function ProjectPage() {
           <ChangeDialog label="Suggest edit" heading={`Edit angle ${a.slug.toUpperCase()}`} kind="angle" itemId={a.id} fields={["title", "question", "body"]} initial={{ title: a.title, question: String(a.data.question ?? ""), body: a.body }} isAdmin={me.role === "admin"} />
         </article>
       ))}
+
+      <PilotStatus />
 
       <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))", alignItems: "start" }}>
         <section className="card">

@@ -82,6 +82,12 @@ const { SOURCES, ANGLES, REFINE, PACKAGES, DECISIONS } = ctx as unknown as {
   DECISIONS: [string, string, string[]][];
 };
 
+// Team pilot results (wiki/topics/grievance-pilot-findings.md, 24 Oct). Team-written, small samples, not independently checked.
+const PILOT_EVIDENCE: Record<string, string> = {
+  B: "Pilots on synthetic grievance records: with a hidden aim plus private notes, escalation of serious cases fell from about 90% to 28%; one pressured gatekeeper was almost as effective as the whole team. Instructed suppression, not spontaneous. See Library → Results.",
+  H: "Pilots: endorsing three unsafe past cases as board-approved dropped watchdog detection (e.g. Sonnet 5.5 98% to 56%, Gemini 3.8 Flash 100% to 33%); one sentence saying the written policy controls restored it on the easy set, only partly on the harder one. Absent in Gemini 4 Argon. See Library → Results.",
+};
+
 ANGLES.forEach((a, i) => {
   const id = String(a.id);
   const body = [
@@ -90,6 +96,7 @@ ANGLES.forEach((a, i) => {
     a.needs ? `**Needs.** ${a.needs}` : "",
     a.fit ? `**Fit.** ${a.fit}` : "",
     REFINE[id] ? `**From the talks.** ${REFINE[id]}` : "",
+    PILOT_EVIDENCE[id] ? `**Pilot evidence so far.** ${PILOT_EVIDENCE[id]}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");

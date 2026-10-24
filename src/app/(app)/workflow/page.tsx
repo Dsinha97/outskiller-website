@@ -3,6 +3,7 @@ import { asc } from "drizzle-orm";
 import { setCheckOwner, setDecision, toggleCheck } from "@/app/actions/team";
 import { BudgetEstimator } from "@/components/BudgetEstimator";
 import { ChangeDialog } from "@/components/ChangeDialog";
+import { PilotStatus } from "@/components/PilotStatus";
 import { WorkflowTimeline } from "@/components/WorkflowTimeline";
 import { db, schema } from "@/db";
 import { listItems, members } from "@/lib/data";
@@ -137,6 +138,8 @@ export default async function WorkflowPage() {
           </span>
         </section>
       </div>
+
+      <PilotStatus part="report" />
 
       <BudgetEstimator cap={Number(decisions.find((x) => x.key === "budget")?.value ?? 50)} />
     </>

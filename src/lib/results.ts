@@ -18,15 +18,38 @@ export type Experiment = {
 
 const META = new Set(["ts", "condition", "seed", "model", "prompt_hash", "cost_usd"]);
 
-export async function loadResults(): Promise<{ experiments: Experiment[]; error?: string }> {
+/** A hand-written or script-printed summary table (a .txt or .md file under results/), shown as text. */
+export type TextResult = { name: string; group: string; url: string; text: string; markdown: boolean };
+
+type GhEntry = { name: string; type: string; path: string; download_url: string | null; html_url: string };
+
+async function listDir(path: string): Promise<{ entries: GhEntry[]; status: number }> {
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+    headers: { Accept: "application/vnd.github+json" },
+    next: { revalidate: 300 },
+  });
+  return { entries: res.ok ? ((await res.json()) as GhEntry[]) : [], status: res.status };
+}
+
+export async function loadResults(): Promise<{ experiments: Experiment[]; texts: TextResult[]; error?: string }> {
   try {
-    const list = await fetch(`https://api.github.com/repos/${REPO}/contents/results`, {
-      headers: { Accept: "application/vnd.github+json" },
-      next: { revalidate: 300 },
-    });
-    if (list.status === 404) return { experiments: [] };
-    if (!list.ok) return { experiments: [], error: `GitHub returned ${list.status}.` };
-    const files = ((await list.json()) as { name: string; download_url: string; html_url: string }[]).filter((f) => f.name.endsWith(".jsonl"));
+    const top = await listDir("results");
+    if (top.status === 404) return { experiments: [], texts: [] };
+    if (top.status !== 200) return { experiments: [], texts: [], error: `GitHub returned ${top.status}.` };
+    // One level of subfolders (e.g. results/grievance-pilots/) is read too.
+    const nested = await Promise.all(top.entries.filter((e) => e.type === "dir").map((d) => listDir(d.path)));
+    const all = [...top.entries, ...nested.flatMap((n) => n.entries)].filter((e) => e.type === "file" && e.download_url);
+    const texts: TextResult[] = await Promise.all(
+      all
+        .filter((f) => /\.(txt|md)$/.test(f.name))
+        .map(async (f) => {
+          const text = await (await fetch(f.download_url!, { next: { revalidate: 300 } })).text();
+          const parts = f.path.split("/");
+          return { name: f.name.replace(/\.(txt|md)$/, ""), group: parts.length > 2 ? parts[1] : "", url: f.html_url, text, markdown: /^\|[\s:-]+\|/m.test(text) };
+        }),
+    );
+    texts.sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
+    const files = all.filter((f) => f.name.endsWith(".jsonl")).map((f) => ({ name: f.name, download_url: f.download_url!, html_url: f.html_url }));
     const experiments = await Promise.all(
       files.map(async (f) => {
         const text = await (await fetch(f.download_url, { next: { revalidate: 300 } })).text();
@@ -43,9 +66,9 @@ export async function loadResults(): Promise<{ experiments: Experiment[]; error?
         return summarize(f.name.replace(/\.jsonl$/, ""), f.html_url, rows);
       }),
     );
-    return { experiments };
+    return { experiments, texts };
   } catch (e) {
-    return { experiments: [], error: (e as Error).message };
+    return { experiments: [], texts: [], error: (e as Error).message };
   }
 }
 

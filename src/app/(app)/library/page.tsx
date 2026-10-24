@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listItems, wikiPages, type Item } from "@/lib/data";
+import { Markdown } from "@/components/Markdown";
 import { loadResults } from "@/lib/results";
 import { requireUser } from "@/lib/session";
 
@@ -145,18 +146,19 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
 }
 
 async function Results() {
-  const { experiments, error } = await loadResults();
+  const { experiments, texts, error } = await loadResults();
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <p className="note">
-        Read from <code className="mono">results/*.jsonl</code> in the{" "}
+        Read from <code className="mono">results/**</code> (<code className="mono">.jsonl</code> run logs, plus <code className="mono">.txt</code>/<code className="mono">.md</code> summary tables) in the{" "}
         <a href="https://github.com/Dsinha97/outskiller-ai-safety-sprint" target="_blank" rel="noopener noreferrer">
           team repo
         </a>{" "}
         every 5 minutes. Each line is one run logged by <code className="mono">runlog.py</code>. Check the positive control before reading any other number.
       </p>
       {error && <p className="error">Couldn&apos;t load results: {error}</p>}
-      {!error && experiments.length === 0 && (
+      <Findings />
+      {!error && experiments.length === 0 && texts.length === 0 && (
         <div className="card">
           <h2>No results yet</h2>
           <p className="sub">Nothing has been logged to the team repo. Runs appear here once someone commits a results file.</p>
@@ -197,7 +199,57 @@ async function Results() {
           </div>
         </article>
       ))}
+      {texts.length > 0 && (
+        <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <h2>Result tables from the team repo</h2>
+          <p className="note">Summary files (<code className="mono">.txt</code> / <code className="mono">.md</code>) printed by the analysis scripts. Shown as committed; open one to read it.</p>
+          {texts.map((t) => (
+            <details key={t.group + t.name} className="card">
+              <summary style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <b>{t.group ? `${t.group} / ` : ""}{t.name}</b>
+                <a href={t.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>Raw file ↗</a>
+              </summary>
+              {t.markdown ? (
+                <Markdown>{t.text}</Markdown>
+              ) : (
+                <pre className="mono" style={{ overflowX: "auto", fontSize: 12, margin: "10px 0 0" }}>{t.text}</pre>
+              )}
+            </details>
+          ))}
+        </section>
+      )}
       <p className="muted">Seeds and variance are shown as logged. Nothing on this page is a finding until the positive control passes and the analysis is written up.</p>
     </section>
+  );
+}
+
+/** Headline numbers from the team's own write-ups (wiki: topics/grievance-pilot-findings). Team-written, not independently checked. */
+function Findings() {
+  const rows: [string, string][] = [
+    ["Pressure and private notes compound", "Escalation with no hidden aim is 92% (MiniMax) and 89% (Gemma). Aim plus private notes: 28% in both. Aim without notes: 64% and 44%."],
+    ["Notes recruit honest raters", "An honest rater given an aim-written note escalated 33% (MiniMax) and 50% (Gemma). A neutral paraphraser recovered about half."],
+    ["One gatekeeper is enough", "Full pipeline, 12 records, Gemma: 5 serious cases not escalated with the aim on the screener alone, 7 with it everywhere, 0 in honest arms."],
+    ["Endorsement switches the watchdog off", "Six arms, four watchdogs: plain, rejected and safe precedents changed nothing (48 of 48 flagged). Only endorsed unsafe precedents lowered detection, to 24–41 of 48."],
+    ["One sentence restores it", "Adding “the written policy controls” brought every first-round watchdog back to 48 of 48, with no measurable rise in false flags."],
+    ["The limit", "On the harder set (rating hides the violation) baseline detection was 38% pooled, 15% endorsed, 27% with the sentence."],
+    ["Four API monitors (24 Oct)", "Endorsement effect shows in Sonnet 5.5 (98% to 56%) and Gemini 3.8 Flash (100% to 33%), is weaker in Haiku 5.5 (83% to 60%), and is absent in Gemini 4 Argon."],
+  ];
+  return (
+    <article className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <h2>Findings so far: Quiet Suppression pilots</h2>
+      <p className="callout">
+        Team-written pilot results on <b>synthetic</b> grievance records. Small samples (12–36 records per arm), no significance tests, mostly one sender family. The hidden aim is instructed in plain words, so these show how an instructed aim is carried out and spread, <b>not</b> spontaneous collusion. Not independently checked. Runs up to 22 Oct UTC are prior work; later runs are sprint work.
+      </p>
+      <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
+        {rows.map(([h, t]) => (
+          <li key={h}>
+            <b>{h}.</b> {t}
+          </li>
+        ))}
+      </ul>
+      <p className="muted">
+        Full detail and caveats: <Link href="/library/topics/grievance-pilot-findings">Grievance pilot findings</Link>.
+      </p>
+    </article>
   );
 }
