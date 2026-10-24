@@ -362,7 +362,7 @@ The paper is not named on the slides or in the talk.`,
 32 of 42 slides captured.
 
 **From the recording.** At least 30 runs per data point, 6 agents (confirmed by Mason). Baseline is a classical DCOP solver (approximately optimal). At lambda = 0, a secret channel between two benign agents raised their coalition advantage on average; cause unexplained. Kimi-K2-Thinking and MiniMax talked but did not act because other agents took the actions they planned. The code-word weakness: the judge can be fooled, hence audit actions. For a weekend project they suggested the mitigation trade-off (public blackboard vs efficiency) in meeting scheduling or Jira, not the hospital environment. Rerunning on newer models is not planned soon.`,
-  shi: `**The talk.** "Lies, Broken Promises, and Silence": how to measure deception in multi-agent LLMs, and what it means for collusion. We did not attend; this is from the recording's transcript and slides.
+  shi: `**The talk.** "Lies, Broken Promises, and Silence": how to measure deception in multi-agent LLMs, and what it means for collusion. This is from the recording's transcript and slides.
 
 **Three-tier test for deception.** T0 misrepresentation (the output is false); T1 deception (the model knew better and acted on purpose); T2 manipulation (it changed a person's choice). Telling a model to lie does not count as intent, because the instruction supplies the goal. Of 92 evaluation papers, 60 have no incentive arm, only 5 add a reversed-incentive arm, and 32 show the model knew better. MASK and Insider Trading reach T0 only. Report the tier your evidence supports.
 
@@ -374,7 +374,22 @@ The paper is not named on the slides or in the talk.`,
 
 **For our project.** Add a matched reversed-incentive arm to any aim-prompted result, report the evidence tier, classify private notes against announcements, and run more than one model.
 
-Caveats: transcript is machine-made; the slide 41 bar segments (358) do not add to the stated 289 rounds, so check before citing; the user did not attend.`,
+Caveats: transcript is machine-made; the slide 41 bar segments (358) do not add to the stated 289 rounds, so check before citing.`,
+  nguyen: `**The talk.** Khanh Linh Nguyen (first author of TraceGuard) gives an overview of AI collusion research. This is from 26 slide captures plus the Zoom transcript and chat.
+
+**The field.** Five waves (tabular RL, deep RL, LLM agents, secret collusion, detection) and four strands (emergence, carriers, detection, mitigation). Most of the 100+ papers are pricing studies. Producing collusion is easy; proving it is the hard part (94% of long-horizon runs colluded when two agents shared task logs, in a 2026 paper). Reading the transcript is not enough: messages can be hidden, faithful reasoning can still collude, and each step can look benign. Anchor on actions and outcomes across the whole episode.
+
+**Detection.** Ten ways to look for collusion, from statistical tests to white-box probes. Only 2 of 229 emergent collusive episodes put the coordination into words. When agents know about the monitor, detection gets harder (20 of 40 attacks never caught at 1% FPR). TraceGuard at 1% FPR catches 20% of attacks (75% at 5%).
+
+**Say and do.** A monitor must separate four cases: agreement carried out (flag), cheap talk, parallel moves with no talk, and competition. Over 90% of broken promises were already in private plans; adding agent messages lifted sabotage detection from 68% to 81% at 2% FPR.
+
+**Six rules for a Track 2.2 study.** Freeze the monitor; report false alarms (recall at 1% and 5%, AUROC); add hard negatives; compress the report; add computed signals (price correlation, HHI, regret); vary the provider.
+
+**Open.** The evidence still disagrees on whether collusion lasts, whether deep RL colludes, whether mixing agents helps, and whether reasoning traces reveal it. No study has compared mitigations on the same markets.
+
+Caveats: 26 of at least 31 slides captured; many cited papers are not in the wiki's sources; the transcript is machine-made.
+
+**From the recording.** The speaker says they are not an AI-safety specialist and read from notes, and that the methods list may be incomplete. At 1% FPR TraceGuard catches 20% of attacks (75% at 5%): fine for an AI-control deployment, but for an antitrust-type auditor the low-FPR end is what matters. Q&A advice: pick something that adds to existing research, or bring a new environment to an existing method. Asked whether a same-model monitor with narrow questions would match a different-provider one, they said they could not say and it should be tested. First papers to read: AI Control (Greenblatt et al.), then Secret Collusion (Motwani et al. 2024).`,
 };
 
 // Talks and sessions, from wiki/sprint/schedule.md (times there are given in ET and UTC);
@@ -387,7 +402,7 @@ const talks: { slug: string; luma: string; speaker: string; aff: string; title: 
   { slug: "anwar", luma: "https://luma.com/ai-collusion-research-sprint-usman-anwar", speaker: "Usman Anwar", aff: "Cambridge", title: "Challenges in Detecting Steganography in LLM Transcripts", at: "2026-10-23T17:15:00Z", wiki: "sprint/talk-5-steganography-in-llm-transcripts", people: ["people/usman-anwar"] },
   { slug: "bagdasarian-nakamura", luma: "https://luma.com/ai-collusion-sprint-bagdasarian-nakamura", speaker: "Eugene Bagdasarian and Mason Nakamura", aff: "UMass Amherst", title: "Auditing Collusion in Cooperative Multi-Agent Systems (Colosseum)", at: "2026-10-23T18:15:00Z", people: ["people/eugene-bagdasarian", "people/mason-nakamura"], wiki: "sprint/talk-6-auditing-collusion-colosseum", papers: ["papers/colosseum-auditing-collusion"] },
   { slug: "shi", luma: "https://luma.com/ai-collusion-research-sprint-jerick-shi", speaker: "Jerick Shi", aff: "The Voleon Group", title: "Lies, Broken Promises, and Silence", at: "2026-10-24T00:15:00Z", wiki: "sprint/talk-7-lies-broken-promises-and-silence", people: ["people/jerick-shi"], papers: ["papers/when-agents-lie"] },
-  { slug: "nguyen", luma: "https://luma.com/ai-collusion-research-sprint-khanh-linh-nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
+  { slug: "nguyen", luma: "https://luma.com/ai-collusion-research-sprint-khanh-linh-nguyen", speaker: "Khanh Linh Nguyen", aff: "Obello, AI Safety Vietnam", title: "Overview of AI collusion research and the most useful topics for the sprint", at: "2026-10-24T12:15:00Z", wiki: "sprint/talk-8-overview-of-collusion-research", people: ["people/khanh-linh-nguyen"], papers: ["papers/traceguard"], note: "Moved from Fri Oct 23 per the updated Luma list." },
   { slug: "nyc-hub", luma: "https://luma.com/ai-collusion-research-sprint-2026-nyc", speaker: "NYC hub at Collider", aff: "In person", title: "NYC hub open (Sat 10am to Sun 6pm ET)", at: "2026-10-24T14:00:00Z", event: true },
   { slug: "lee", luma: "https://luma.com/ai-collusion-research-sprint-matthew-lee", speaker: "Matthew Lee", aff: "Poseidon Research", title: "Defining AI Collusion (in person, streamed)", at: "2026-10-24T15:00:00Z", people: ["people/matthew-lee"] },
 ];
@@ -397,7 +412,7 @@ talks.forEach((t, i) => {
     slug: t.slug,
     title: `${t.speaker}: ${t.title}`,
     body: TALK_NOTES[t.slug] ?? "",
-    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-24T01:30:00Z"), recorded: Boolean(t.recorded), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
+    data: { link: t.luma, recording: "", speaker: t.speaker, affiliation: t.aff, talkTitle: t.title, startsAt: t.at, minutes: t.mins ?? null, held: new Date(t.at) < new Date("2026-10-24T13:30:00Z"), recorded: Boolean(t.recorded), event: Boolean(t.event), wiki: t.wiki ?? "", people: t.people ?? [], papers: t.papers ?? [], note: t.note ?? "" },
     origin: "brief",
     sort: i,
   });
